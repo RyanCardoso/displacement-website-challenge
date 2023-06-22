@@ -1,58 +1,56 @@
 // Libs
 import React, { useState } from "react";
+import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import axios from "axios";
 
 // Ui
-import { Box, Button, CircularProgress } from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import { InputForm, SelectForm } from "@/components";
+import LoadingButton from "@mui/lab/LoadingButton";
+
+// Services
+import { ClientService } from "@/services";
 
 // Types
 import { ClientFormDTO } from "@/types";
 
 // Utils
 import { maskCEP } from "@/utils";
-import { clientSchema, documentOptions, ufOptions } from "./helpers";
+import {
+  clientDefaultValues,
+  clientSchema,
+  documentOptions,
+  ufOptions,
+} from "./helpers";
 
 export const ClientForm = () => {
-  const [loadingCEP, setLoadingCEP] = useState(false);
+  const router = useRouter();
+  const [loadingCEP, setLoadingCEP] = useState<boolean>(false);
+  const [loadingSubmit, setLoadingSubmit] = useState<boolean>(false);
 
-  const {
-    register,
-    setValue,
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm<ClientFormDTO>({
+  const clientService = new ClientService();
+
+  const { setValue, handleSubmit, control } = useForm<ClientFormDTO>({
     mode: "onChange",
     resolver: yupResolver(clientSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      typeDocument: "",
-      document: "",
-      cep: "",
-      street: "",
-      number: "",
-      neighborhood: "",
-      uf: "",
-      city: "",
-    },
+    defaultValues: clientDefaultValues,
   });
 
   const handleChangeCep = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { value } = event.target;
-    event.target.value = maskCEP(value);
+    const valueFormatted = maskCEP(value);
+    event.target.value = valueFormatted;
 
     if (value.length === 9) {
       setLoadingCEP(true);
 
       try {
         const response = await axios.get(
-          `https://viacep.com.br/ws/${value}/json/`
+          `https://viacep.com.br/ws/${valueFormatted}/json/`
         );
 
         setValue("street", response.data.logradouro);
@@ -67,8 +65,27 @@ export const ClientForm = () => {
     }
   };
 
-  const handleSubmitForm = handleSubmit((data) => {
-    console.log(data);
+  const handleSubmitForm = handleSubmit(async (data) => {
+    setLoadingSubmit(true);
+
+    try {
+      await clientService.create({
+        nome: `${data.firstName} ${data.lastName}`,
+        tipoDocumento: data.typeDocument,
+        numeroDocumento: data.document,
+        logradouro: data.street,
+        numero: data.number,
+        bairro: data.neighborhood,
+        uf: data.uf,
+        cidade: data.city,
+      });
+
+      router.push("/");
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingSubmit(false);
+    }
   });
 
   return (
@@ -164,9 +181,14 @@ export const ClientForm = () => {
         <InputForm control={control} name="city" label="Cidade" fullWidth />
       </Box>
 
-      <Button type="submit" variant="outlined">
+      <LoadingButton
+        type="submit"
+        variant="contained"
+        loading={loadingSubmit}
+        disableElevation
+      >
         Cadastrar
-      </Button>
+      </LoadingButton>
     </Box>
   );
 };

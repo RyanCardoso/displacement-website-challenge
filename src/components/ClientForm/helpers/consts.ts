@@ -1,3 +1,16 @@
+export const clientDefaultValues = {
+  firstName: "",
+  lastName: "",
+  typeDocument: "",
+  document: "",
+  cep: "",
+  street: "",
+  number: "",
+  neighborhood: "",
+  uf: "",
+  city: "",
+};
+
 export const documentOptions = ["CPF", "CNPJ", "RG"];
 
 export const ufOptions = [

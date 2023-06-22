@@ -2,20 +2,17 @@
 import React from "react";
 
 // Ui
-import { Container } from "@mui/material";
-
-// Services
-import { ClientService } from "@/services";
-import { ClientForm } from "@/components";
+import { Box as Wrapper, Container } from "@mui/material";
+import { BreadcrumbsUI, ClientForm } from "@/components";
 
 export default function RegisterClient() {
-  const clientService = new ClientService();
-
   return (
     <Container maxWidth="lg">
-      <h1>Cadastro</h1>
-
-      <ClientForm />
+      <Wrapper display="flex" flexDirection="column" gap={2} pt={4}>
+        <h1>Cadastro</h1>
+        <BreadcrumbsUI />
+        <ClientForm />
+      </Wrapper>
     </Container>
   );
 }
